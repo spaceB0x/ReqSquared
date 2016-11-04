@@ -24,11 +24,12 @@ class BurpExtender(IBurpExtender, ITab, IMessageEditorController, IContextMenuFa
         
         self._callbacks = callbacks
         self._helpers = callbacks.getHelpers()
-        self.context = None
+        #self.context = None
 
 
         # main split pane
         self._splitpane = JSplitPane(JSplitPane.VERTICAL_SPLIT)
+        self._splitpane2 =JSplitPane(JSplitPane.HORIZONTAL_SPLIT)
 
         # Table of RequestLists
         requestTable = TableOne(self)
@@ -85,17 +86,16 @@ class BurpExtender(IBurpExtender, ITab, IMessageEditorController, IContextMenuFa
     ### Request handling functions ###
     def grabRequest(self, event):
         http_traffic = self.context.getSelectedMessages()
-        #if (http_traffic != None and len(http_traffic) > 0):
-        for t in http_traffic:
-            self._reqstack.add(t)
-        self.loadreqs()
+        if (http_traffic != None and len(http_traffic) > 0):
+            for t in http_traffic:
+                self._reqstack.add(t)
+        self.loadReqs()
         return
     
-    def loadreqs(self):
+    def loadReqs(self):
         for r in self._reqstack:
             self._lock.acquire()
             row = self._reqstack.size()
-            self._reqstack.add(self._helpers.analyzeRequest(r).getUrl().toString())
             self.fireTableRowsInserted(row, row)
             self._lock.release()
 
@@ -116,9 +116,10 @@ class BurpExtender(IBurpExtender, ITab, IMessageEditorController, IContextMenuFa
 
     def getValueAt(self, rowIndex, columnIndex):
         logEntry = self._reqstack.get(rowIndex)
+        item = self._helpers.analyzeRequest(logEntry).getUrl()
         if columnIndex == 0:
-            return "test1"
-        return ""
+            return item
+        return "error: @ getValueAt(self, rowIndex, conlumnIndex)"
 
 
     ### implement IMessageEditorController functions ###
@@ -134,7 +135,7 @@ class BurpExtender(IBurpExtender, ITab, IMessageEditorController, IContextMenuFa
 
 #                                        #
 # extend JTable to handle cell selection #
-#                                        #       
+#                                        #       _
     
 class TableOne(JTable):
 
@@ -148,7 +149,7 @@ class TableOne(JTable):
         logEntry = self._extender._reqstack.get(row)
         self._extender._requestViewer.setMessage(logEntry._requestResponse.getRequest(), True)
         self._extender._responseViewer.setMessage(logEntry._requestResponse.getResponse(), False)
-        self._extender._currentlyDisplayedItem = logEntry._requestResponse
+        self._extender._DisplayedItem = logEntry._requestResponse
         
         JTable.changeSelection(self, row, col, toggle, extend)
         return
